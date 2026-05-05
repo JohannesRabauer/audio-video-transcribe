@@ -1,0 +1,7 @@
+services:
+  transcriber:
+    build: .
+    image: transcriber
+    volumes:
+      - .:/data
+    entrypoint: ["python", "/app/main.py"]
