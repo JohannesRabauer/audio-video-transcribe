@@ -86,16 +86,43 @@ We will start by discussing supervised learning.
 
 ---
 
+## Highlight picker (viral clip suggestions)
+
+Once you have a `.json` transcript, you can pass it to a local AI model to get a summary and the top 10+ clip suggestions ranked by viral potential.
+
+**Prerequisites:** Docker Desktop ≥ 4.40 with the model pulled:
+
+```bash
+docker model pull ai/llama3.2
+```
+
+**Run:**
+
+```bash
+docker compose run --rm highlight-picker output/docker.json --model llama3.2
+```
+
+The command returns:
+
+- A 2–3 sentence summary of the full content.
+- At least 10 clips (10–30 s each), ranked from highest to lowest viral potential, each with a start time, end time, and a short description of why that moment works as a short.
+
+You can swap `ai/llama3.2` for any model available in Docker Desktop (e.g. `ai/phi4-mini` for faster results on a long transcript).
+
+---
+
 ## Project structure
 
 ```
 .
 ├── app/
-│   ├── main.py          # CLI entrypoint
-│   ├── transcriber.py   # Whisper transcription logic
-│   ├── ffmpeg_utils.py  # Audio extraction via FFmpeg
-│   └── exporters.py     # JSON + SRT output writers
+│   ├── main.py              # CLI entrypoint (transcription)
+│   ├── transcriber.py       # Whisper transcription logic
+│   ├── ffmpeg_utils.py      # Audio extraction via FFmpeg
+│   ├── exporters.py         # JSON + SRT output writers
+│   └── highlight_picker.py  # Viral clip suggestions via local AI
 ├── Dockerfile
+├── Dockerfile.highlight
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md

@@ -5,3 +5,16 @@ services:
     volumes:
       - .:/data
     entrypoint: ["python", "/app/main.py"]
+
+  highlight-picker:
+    build:
+      context: .
+      dockerfile: Dockerfile.highlight
+    image: highlight-picker
+    volumes:
+      - .:/data
+    environment:
+      - HIGHLIGHT_API_URL=http://model-runner.docker.internal/engines/llama.cpp/v1/chat/completions
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["python", "/app/highlight_picker.py"]

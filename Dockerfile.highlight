@@ -1,0 +1,8 @@
+FROM python:3.12-alpine
+
+COPY app/highlight_picker.py /app/highlight_picker.py
+
+WORKDIR /data
+
+ENTRYPOINT ["python", "/app/highlight_picker.py"]
+CMD ["--help"]
