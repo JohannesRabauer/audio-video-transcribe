@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--device",
-        default="cpu",
+        default="cuda",
         choices=["cpu", "cuda"],
         help="Compute device (default: cpu)",
     )

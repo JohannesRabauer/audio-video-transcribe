@@ -27,11 +27,41 @@ SYSTEM_PROMPT = (
 )
 
 
-def build_transcript(segments: list) -> str:
-    lines = []
+def build_transcript(segments: list, max_chars: int = 4000) -> str:
+    # Merge consecutive segments into ~10-second blocks to reduce token count
+    merged = []
+    block_start = None
+    block_end = None
+    block_texts = []
+
     for seg in segments:
-        lines.append(f"[{seg['start']:.1f}s - {seg['end']:.1f}s] {seg['text'].strip()}")
-    return "\n".join(lines)
+        if block_start is None:
+            block_start = seg["start"]
+        block_end = seg["end"]
+        block_texts.append(seg["text"].strip())
+        if block_end - block_start >= 10:
+            merged.append({
+                "start": block_start,
+                "end": block_end,
+                "text": " ".join(block_texts),
+            })
+            block_start = None
+            block_texts = []
+
+    if block_texts:
+        merged.append({"start": block_start, "end": block_end, "text": " ".join(block_texts)})
+
+    # If still too long, sample evenly across the full duration
+    lines = [f"[{s['start']:.0f}s-{s['end']:.0f}s] {s['text']}" for s in merged]
+    full = "\n".join(lines)
+    if len(full) <= max_chars:
+        return full
+
+    # Pick evenly spaced entries to stay within budget
+    ratio = max_chars / len(full)
+    step = max(1, int(1 / ratio))
+    sampled = lines[::step]
+    return "\n".join(sampled)
 
 
 def call_model(api_url: str, model: str, transcript: str) -> str:
@@ -42,6 +72,7 @@ def call_model(api_url: str, model: str, transcript: str) -> str:
             {"role": "user", "content": f"Transcript:\n{transcript}"},
         ],
         "temperature": 0.3,
+        "max_tokens": 1500,
         "stream": True,
     }).encode("utf-8")
 
@@ -139,6 +170,7 @@ def main() -> None:
         segments = json.load(fh)
 
     transcript = build_transcript(segments)
+    print(f"Transcript: {len(segments)} segments → {len(transcript)} chars (~{len(transcript)//4} tokens) sent to model", file=sys.stderr)
     raw = call_model(args.api_url, args.model, transcript)
     print_results(raw)
 
